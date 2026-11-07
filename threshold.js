@@ -1,7 +1,7 @@
 import http from 'k6/http';
 
 export const options = {
-    vus: 10,
+    vus: 30,
     duration: '30s',
     thresholds: {
         http_req_duration: ['p(95)<240'], // 95% de las solicitudes deben ser menores a 200ms
@@ -11,5 +11,7 @@ export const options = {
 
 export default function () {
     const idProducto = Math.floor(Math.random() * 100) + 1; // Genera un ID de producto aleatorio entre 1 y 100
-    const res = http.get('https://dummyjson.com/products/${idProducto}');
+    const url = `https://dummyjson.com/products/${idProducto}`;
+    const res = http.get(url);
+    console.log(`GET ${url} - Status: ${res.status} - Response: ${res.body}`);
 }
