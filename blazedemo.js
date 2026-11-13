@@ -4,6 +4,8 @@ import { group, sleep, check } from "k6";
 import http from "k6/http";
 import execution from "k6/execution";
 
+
+
 export const options = {
   stages: [
     { target: 80, duration: "40s" },
