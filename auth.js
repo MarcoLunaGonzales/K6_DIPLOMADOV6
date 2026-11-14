@@ -1,11 +1,8 @@
 import http from "k6/http";
-import execution from "k6/execution";
 import { check } from "k6";
 
 export const options = {
-  stages: [
-    { target: 1, duration: "1s" },   
-  ],
+  stages: [{ target: 1, duration: "1s" }],
 };
 
 export function setup() {
@@ -13,7 +10,7 @@ export function setup() {
   const payload = JSON.stringify({
     username: "emilys",
     password: "emilyspass",
-    expiresInMins: 30, // optional
+    expiresInMins: 30,
   });
 
   const params = {
@@ -22,12 +19,38 @@ export function setup() {
     },
   };
 
-  let res = http.post(loginUrl, payload, params);
+  const res = http.post(loginUrl, payload, params);
 
-  check(res, { "login successful": (r) => r.status === 200 });
+  const token = res.json("accessToken");
+  const loginSucceeded = check(res, {
+    "login successful": (r) => r.status === 200,
+    "access token received": () => Boolean(token),
+  });
 
-  console.log(`Login response: ${res.json("token")}`);
+  if (!loginSucceeded || !token) {
+    throw new Error(`Login failed with HTTP status ${res.status}. Check the credentials and response.`);
+  }
+  console.log(`Login Satisfactorio. Access token: ${token}`);
 
-  return { token: res.json("token") };
+  return { token };
+}
+
+export default function (data) {
+  const authMeUrl = "https://dummyjson.com/auth/me";
+
+  const params = {
+    headers: {
+      "Authorization": `Bearer ${data.token}`,
+      "Content-Type": "application/json",
+    },
+  };
+
+  const res = http.get(authMeUrl, params);
+
+  check(res, {
+    "auth/me successful": (r) => r.status === 200,
+  });
+
+  console.log(`Auth me status: ${res.status}`);
 }
 
